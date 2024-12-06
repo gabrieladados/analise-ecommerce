@@ -1,9 +1,9 @@
 # Análise de Dados de um E-commerce com Big Query
 
-> Este projeto demonstra como utilizar **SQL** para analisar dados de um e-commerce fictício, **The Look**, disponível no Google BigQuery. O objetivo é responder perguntas estratégicas sobre o negócio e criar um dashboard no **Looker Studio** para monitorar os principais indicadores de desempenho.
+> Este projeto demonstra como utilizar **SQL** para analisar dados de um e-commerce fictício, **The Look**, disponível no **Google BigQuery**. O objetivo é responder perguntas estratégicas sobre o negócio e fornecer insights para apoiar a tomada de decisões.
 >
 
-
+<br>
 
 ## 🗂️ Base de Dados  
 
@@ -14,7 +14,8 @@ Ela contém informações relacionadas a:
 - Pedidos  
 - Logística  
 - Eventos no site  
-- Campanhas de marketing  
+- Campanhas de marketing
+<br>
 
 ### 📋 Tabelas Utilizadas  
 Das 7 tabelas disponíveis, 5 serão usadas nesta análise:  
@@ -26,6 +27,7 @@ Das 7 tabelas disponíveis, 5 serão usadas nesta análise:
 
 Mais informações sobre como acessar a base de dados estão disponíveis [aqui](https://console.cloud.google.com/marketplace/product/bigquery-public-data/thelook-ecommerce?project=projeto-1-405620&pli=1).
 
+<br>
 
 ## 🎯 Objetivo da Análise  
 
@@ -47,8 +49,8 @@ Responder a **10 perguntas-chave** para a liderança do e-commerce, cobrindo fat
    - Quantidade de produtos distintos comprados  
    - Quantidade de criações de carrinhos  
 10. **Top clientes**: Forneça uma lista com os IDs e e-mails dos 10 clientes com maior total de compras.  
-
 ---
+<br>
 
 ## 📊 Análise do Faturamento  
 
@@ -95,7 +97,7 @@ Os resultados de 2024 comparado a 2023, mostram-que:
   
 Portanto, comparado aos meses do ano anterior, o faturamento vem se mostrando crescente.
 
----
+<br>
 
 ## 🛒 Análise do Ticket Médio  
 
@@ -117,9 +119,10 @@ ORDER BY mes;
 ```
 ![eco3](https://github.com/user-attachments/assets/c29f80c6-2746-44d1-ade0-0b307cddd91d)
 
-O ticket médio do mês de março de 2024 é de R$ 112,53.
+O ticket médio do mês de março de 2024 é de $ 112,53.
 
----
+<br>
+
 ## 🛍️ Análise dos Produtos Mais e Menos Vendidos  
 
 _Pergunta: Quais marcas e categorias de produtos vendemos mais e menos?_
@@ -223,6 +226,8 @@ Agora, analisaremos as categorias que geram menor faturamento e vendas do númer
 
 Nota-se que Conjuntinhos de Roupas e Macacões são as categorias que apresentam tanto o menor faturamento como também o menor número de itens vendidos.
 
+<br>
+
 ## 🚫 Análise dos Produtos Mais Cancelados e Devolvidos  
 
 _Pergunta:  Quais são as marcas e categorias de produtos mais canceladas e devolvidas?_ 
@@ -261,7 +266,8 @@ ORDER BY cancelado DESC;
 
 As categorias de roupas íntimas, tops & camisetas e jeans são as categorias com maior número de produtos cancelados e devolvidos.
 
----
+<br>
+
 ## 📈 Análise da Taxa de Conversão de Vendas  
 
 _Pergunta: Qual é a taxa de conversão de vendas?_
@@ -294,7 +300,7 @@ ORDER BY mes
 
 Analisando historicamente, a taxa de conversão do site é de 9,6%. Nos últimos meses, a taxa tem se mostrado crescente, chegando a 6,67% no mês de março de 2024.
 
----
+<br>
 
 ## 👥 Análise do Perfil dos Clientes  
 
@@ -357,3 +363,166 @@ SELECT
 ![eco18](https://github.com/user-attachments/assets/87ab2ceb-915d-4dcc-8560-6b7d2305a80d)
 
 Em suma, os principais países em termos de número de clientes são: China (27.221), Estados Unidos (17.807) e Brasil (11.492). Já em relação a gênero, os resultados são bem equilibrados, sendo o gênero masculino um pouco maior em número de clientes e faturamento comparado ao gênero feminino. Por fim, no que tange à faixa etária, as que se destacam em número total de clientes e faturamento são de 21 a 30 e 31 a 40 anos.
+
+
+<br>
+
+## 📢 Análise do Canal de Marketing  
+
+_Pergunta: Em que canal de marketing estamos indo bem?_
+
+Para identificar qual canal de marketing está trazendo mais clientes para a loja, vamos contabilizar o número de clientes por tipo de canal de marketing utilizado.  
+
+```sql
+SELECT  
+  u.traffic_source,
+  COUNT(o.user_id) AS total_clientes
+FROM bigquery-public-data.thelook_ecommerce.users AS u
+JOIN bigquery-public-data.thelook_ecommerce.orders AS o
+      ON u.id = o.user_id
+WHERE o.status NOT IN ('Cancelled', 'Returned')
+GROUP BY u.traffic_source
+ORDER BY total_clientes DESC;
+```
+
+![eco19](https://github.com/user-attachments/assets/ea950b75-d0b2-496e-9764-ccbd14117f6f)
+
+Os mecanismos de pesquisas sobre o e-commerce representa o principal canal de marketing na geração de clientes (65.114), seguido pelo tráfego orgânico (14.172) e o Facebook (5.568).
+
+
+<br>
+
+## ⏳ Análise do Tempo para a Próxima Compra  
+
+_Pergunta: Retorne o tempo em dias entre uma compra e outra para cada usuário. Traga, depois, o usuário com maior tempo._ 
+
+Para realizar esse cálculo, vamos trazer a data do pedido atual, a data do último pedido e calcular a diferença em dias entre a data atual e a última compra do usuário.  
+
+```sql
+SELECT 
+  u.id,
+  o.order_id,
+  o.created_at AS data_pedido_atual,
+  LAG(o.created_at) OVER(PARTITION BY u.id ORDER BY o.created_at) AS data_ultimo_pedido,
+  TIMESTAMP_DIFF(o.created_at, LAG(o.created_at) OVER(PARTITION BY u.id ORDER BY o.created_at), day) AS dias_ultima_compra
+FROM bigquery-public-data.thelook_ecommerce.users AS u
+INNER JOIN bigquery-public-data.thelook_ecommerce.orders AS o 
+ON u.id = o.user_id
+ORDER BY dias_ultima_compra DESC;
+````
+
+![eco20](https://github.com/user-attachments/assets/952cb810-2ebc-45bf-bb9f-d35241f2a729)
+
+
+<br>
+
+## 📊 Resumo sobre os Usuários  
+
+_Pergunta: Traga informações sobre os usuários (de todos, tendo ou não compras). Incluindo: Id do usuário, quantidade de compras realizadas, quantidade de itens comprados, ticket médio, quantidade de produtos distintos comprados e a quantidade de criações de carrinho._
+
+Para obter essas informações, vamos combinar dados de usuários, pedidos, itens de pedido e eventos para calcular métricas chave para cada usuário.  
+  
+```sql
+SELECT 
+  u.id,
+  COUNT(DISTINCT o.order_id) AS quant_compras,
+  SUM(o.num_of_item) AS quant_itens,
+  ROUND(SUM(o.num_of_item * oi.sale_price)/COUNT(o.order_id),2) AS ticket_medio,
+  COUNT(DISTINCT p.id) AS produtos_distintos,
+  COUNT(DISTINCT e.id) AS num_carrinhos
+FROM bigquery-public-data.thelook_ecommerce.users AS u
+LEFT JOIN bigquery-public-data.thelook_ecommerce.orders AS o ON u.id = o.user_id
+LEFT JOIN bigquery-public-data.thelook_ecommerce.order_items AS oi ON oi.user_id = u.id
+LEFT JOIN bigquery-public-data.thelook_ecommerce.products AS p ON oi.product_id = p.id
+LEFT JOIN bigquery-public-data.thelook_ecommerce.events AS e ON e.user_id = u.id
+GROUP BY u.id;
+````
+
+![eco21](https://github.com/user-attachments/assets/042f0d47-4d1e-4a96-826f-f6e59f97669a)
+
+
+<br>
+
+## 🏆 Análise do Top 10 Clientes com Maior Total de Compras  
+
+_Pergunta:  Forneça uma lista de 10 IDs de clientes e e-mails com o maior total de compras. A equipe de marketing fornecerá um desconto._
+
+Para identificar os 10 clientes com maior total de compras, vamos classificar os clientes com base no valor total gasto, calculando o faturamento por usuário.  
+
+```sql
+SELECT 
+  RANK()OVER(ORDER BY ROUND(SUM(o.num_of_item * oi.sale_price),2) DESC) AS rank_faturamento,
+  o.user_id,
+  u.email,
+  ROUND(SUM(o.num_of_item * oi.sale_price),2) AS faturamento
+FROM bigquery-public-data.thelook_ecommerce.orders AS o
+JOIN bigquery-public-data.thelook_ecommerce.order_items AS oi ON o.order_id = oi.order_id
+JOIN bigquery-public-data.thelook_ecommerce.users AS u ON u.id = o.user_id
+GROUP BY 2, 3
+ORDER BY rank_faturamento;
+````
+
+![eco22](https://github.com/user-attachments/assets/c5c27cfa-7960-4a8f-b665-36607752fc3d)
+
+
+<br>
+
+# 💡 Principais Insights  
+A partir da análise da base de dados do The Look E-commerce, os principais insights encontrados foram:
+
+- **Faturamento em Ascensão:** Os primeiros meses de 2024 revelam um crescimento expressivo, com março registrando um aumento de **219,88%** em relação ao ano anterior.
+  
+- **Estabilidade do Ticket Médio:** O ticket médio em **março de 2024** mantém-se estável, não apresentando crescimento significativo nos últimos 6 meses.
+  
+- **Liderança da Calvin Klein:** **Calvin Klein** destaca-se como a marca com **maior faturamento** e o **segundo maior número de itens vendidos**.
+  
+- **Categorias em Destaque:** **Agasalhos & Casacos** lideram em **faturamento**, enquanto **roupas íntimas** são líderes em **volume de vendas**.
+  
+- **Categorias com Baixo Desempenho:** **Conjuntinhos de Roupas** e **Macacões** apresentam o **menor faturamento** e **número de itens vendidos**.
+  
+- **Problemas com Cancelamentos e Devoluções:** **Allegra K** e **Calvin Klein** enfrentam desafios com **cancelamentos e devoluções**.
+  
+- **Desafios nas Categorias Populares:** **Roupas íntimas, tops & camisetas e jeans** enfrentam **problemas com cancelamentos e devoluções**.
+  
+- **Tendência de Conversão do Site:** Historicamente, a **taxa de conversão do site** é de **9,6%**. Nos últimos meses, apresenta uma **tendência crescente**, saindo de **5,27% em janeiro de 2024** para **6,67% em março** do mesmo ano.
+  
+- **Demografia dos Clientes:** Os principais **países em número de clientes** são **China, Estados Unidos e Brasil**, com o **gênero masculino** liderando em **clientes e faturamento** nas faixas etárias de **21 a 30** e **31 a 40 anos**.
+  
+- **Canais de Marketing Eficientes:** **Mecanismos de pesquisa** são o **principal canal de marketing**, seguidos pelo **tráfego orgânico** e pelo **Facebook**.
+
+
+---
+<br>
+
+# 🎯 Recomendações Estratégicas 
+Diante dessas informações, segue uma lista de recomendações visando o aumento de faturamento do E-commerce e uma melhor experiência do lead com a empresa.
+
+1. **Investimento em Marcas de Destaque:** Dada a liderança da **Calvin Klein** em faturamento e vendas, considere expandir a oferta de produtos dessa marca ou explorar **parcerias** para lançar **produtos exclusivos**.
+
+2. **Gestão do Estoque:** Avaliar a possibilidade de diversificar o estoque, especialmente em **categorias de alto desempenho** como **Agasalhos & Casacos** e **Roupas íntimas**.
+
+3. **Gestão de Cancelamentos e Devoluções:** Analise os motivos por trás dos **cancelamentos e devoluções**, especialmente para marcas como **Allegra K** e **Calvin Klein**, e implemente **medidas corretivas**, como melhorar as **descrições dos produtos** ou oferecer **políticas de devolução mais flexíveis**.
+
+4. **Segmentação de Mercado e Marketing:** Segmente a campanha de **marketing** de acordo com a **demografia dos clientes**, adaptando **mensagens e ofertas** para diferentes **faixas etárias** e **regiões geográficas**.
+
+5. **Canais de Marketing:** Aproveite os **canais de marketing comprovadamente eficazes**, como **mecanismos de pesquisa**, **tráfego orgânico** e **Facebook**. Além disso, experimente **novas estratégias**, como **marketing de influenciadores**, para ampliar o alcance da marca e atrair novos públicos.
+
+
+---
+
+
+## Constribuições
+
+Muito obrigada por acompanhar meu projeto até aqui! 🎉
+
+Contribuições são **muito bem-vindas**. Se você tem sugestões ou melhorias, fique à vontade para abrir uma **issue** ou enviar um **pull request**.
+
+Gostou do projeto? Não esqueça de dar uma ⭐️! 
+
+
+**Meus Contatos:**
+
+💻 [LinkedIn](https://www.linkedin.com/in/gabrielasantanamorais/)  
+📩 [E-mail](mailto:gabrielasmorais01@gmail.com)
+
+**Até a próxima!** 🚀
