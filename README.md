@@ -511,7 +511,7 @@ Diante dessas informações, segue uma lista de recomendações visando o aument
 ---
 
 
-## Constribuições
+## Contribuições
 
 Muito obrigada por acompanhar meu projeto até aqui! 🎉
 
